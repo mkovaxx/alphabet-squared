@@ -8,7 +8,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
- "glam",
+ "glam 0.23.0",
  "opencascade",
 ]
 
@@ -217,6 +217,12 @@ name = "glam"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8e4afd9ad95555081e109fe1d21f2a30c691b5f0919c67dfa690a2e1eb6bd51c"
+
+[[package]]
+name = "glam"
+version = "0.24.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5418c17512bdf42730f9032c74e1ae39afc408745ebb2acf72fbc4691c17945"
 dependencies = [
  "bytemuck",
 ]
@@ -234,6 +240,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 
 [[package]]
+name = "kicad-parser"
+version = "0.1.0"
+dependencies = [
+ "sexp",
+ "thiserror",
+]
+
+[[package]]
 name = "link-cplusplus"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -244,9 +258,9 @@ dependencies = [
 
 [[package]]
 name = "occt-sys"
-version = "0.2.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7acaa7d857f483c1d7c5c9391e470b990f6e52fa5f2d4353eeee6be208390899"
+checksum = "f21b287cafb512e8eee92b8961bf7c39d196fd03de5e17da51843cc106ae62bc"
 dependencies = [
  "cmake",
 ]
@@ -254,11 +268,10 @@ dependencies = [
 [[package]]
 name = "opencascade"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cac07d534d3e8edff488853310e616f402682490a06ed558ea21376e3dd0ac6"
 dependencies = [
  "cxx",
- "glam",
+ "glam 0.24.2",
+ "kicad-parser",
  "opencascade-sys",
  "thiserror",
 ]
@@ -266,8 +279,6 @@ dependencies = [
 [[package]]
 name = "opencascade-sys"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5363b69779640dfb178c061f0ec6f26a7799a5e79982b95f1e4e5c4be96fd9c"
 dependencies = [
  "cmake",
  "cxx",
@@ -304,6 +315,12 @@ name = "scratch"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3cf7c11c38cb994f3d40e8a8cde3bbd1f72a435e4c49e85d6553d8312306152"
+
+[[package]]
+name = "sexp"
+version = "1.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c8fa7ac9df84000b0238cf497cb2d3056bac2ff2a7d8cf179d2803b4b58571f"
 
 [[package]]
 name = "shlex"
