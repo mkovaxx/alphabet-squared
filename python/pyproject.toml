@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "alphabet-squared"
+version = "0.1.0"
+description = "Generate 3D letter intersections."
+authors = ["Mate Kovacs <mkovaxx@gmail.com>"]
+license = "MIT"
+readme = "../README.md"
+packages = [{ include = "alphabet_squared" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+cadquery = "^2.2.0"
+
+[tool.poetry.scripts]
+alphabet-squared = "alphabet_squared.stuff:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
