@@ -8,7 +8,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
- "glam 0.23.0",
+ "glam",
  "opencascade",
 ]
 
@@ -214,12 +214,6 @@ checksum = "a0d2fde1f7b3d48b8395d5f2de76c18a528bd6a9cdde438df747bfcba3e05d6f"
 
 [[package]]
 name = "glam"
-version = "0.23.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e4afd9ad95555081e109fe1d21f2a30c691b5f0919c67dfa690a2e1eb6bd51c"
-
-[[package]]
-name = "glam"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5418c17512bdf42730f9032c74e1ae39afc408745ebb2acf72fbc4691c17945"
@@ -270,7 +264,7 @@ name = "opencascade"
 version = "0.2.0"
 dependencies = [
  "cxx",
- "glam 0.24.2",
+ "glam",
  "kicad-parser",
  "opencascade-sys",
  "thiserror",
