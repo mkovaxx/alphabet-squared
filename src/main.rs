@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::Parser;
 use glam::DVec3;
 use opencascade::{
-    primitives::{IntoShape, Solid},
+    primitives::{IntoShape, Shape},
     text::{Font, FontAspect},
 };
 
@@ -39,10 +39,8 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn make_glyph_shape(font: &mut Font, c: char) -> Solid {
-    let shape = font
-        .render_glyph(c)
-        .to_face()
-        .extrude(DVec3::new(0.0, 1.0, 0.0));
+fn make_glyph_shape(font: &mut Font, c: char) -> Shape {
+    let face = font.render_glyph(c);
+    let shape = face.extrude(DVec3::new(0.0, 1.0, 0.0));
     shape
 }
