@@ -1,46 +1,75 @@
 use std::path::PathBuf;
 
 use clap::Parser;
-use glam::DVec3;
-use opencascade::{
-    primitives::{IntoShape, Shape},
-    text::{Font, FontAspect},
-};
+use freetype as ft;
 
 #[derive(Parser, Debug)]
 struct Args {
-    font: String,
+    #[arg(
+        short,
+        long,
+        value_name = "FILE",
+        default_value = "assets/FiraSans-Regular.ttf"
+    )]
+    font: PathBuf,
 
     #[arg(short, long, value_name = "FILE", default_value = "output")]
     output: PathBuf,
+
+    char: char,
 }
 
-fn main() -> anyhow::Result<()> {
+fn draw_curve(curve: ft::outline::Curve) {
+    match curve {
+        ft::outline::Curve::Line(pt) => println!("L {} {}", pt.x, -pt.y),
+        ft::outline::Curve::Bezier2(pt1, pt2) => {
+            println!("Q {} {} {} {}", pt1.x, -pt1.y, pt2.x, -pt2.y)
+        }
+        ft::outline::Curve::Bezier3(pt1, pt2, pt3) => println!(
+            "C {} {} {} {} {} {}",
+            pt1.x, -pt1.y, pt2.x, -pt2.y, pt3.x, -pt3.y
+        ),
+    }
+}
+
+fn main() {
     let args = Args::parse();
 
-    std::fs::create_dir_all(&args.output)?;
+    let font = args.font;
+    let character = args.char as usize;
+    let library = ft::Library::init().unwrap();
+    let face = library.new_face(font, 0).unwrap();
 
-    let mut font = Font::from_name("Sans", FontAspect::Regular, 10.0);
+    face.set_char_size(40 * 64, 0, 50, 0).unwrap();
+    face.load_char(character, ft::face::LoadFlag::NO_SCALE)
+        .unwrap();
 
-    let chars: String = ('A'..'Z').chain('0'..'9').collect();
+    let glyph = face.glyph();
+    let metrics = glyph.metrics();
+    let xmin = metrics.horiBearingX - 5;
+    let width = metrics.width + 10;
+    let ymin = -metrics.horiBearingY - 5;
+    let height = metrics.height + 10;
+    let outline = glyph.outline().unwrap();
 
-    for char_1 in chars.chars() {
-        let shape_1 = make_glyph_shape(&mut font, char_1);
-        for char_2 in chars.chars() {
-            let name = format!("{char_1}{char_2}");
-            println!("Preparing shape for {name}...");
-            let path = args.output.join(format!("{name}.stl"));
-            let shape_2 = make_glyph_shape(&mut font, char_2);
-            let shape = shape_1.union(&shape_2).into_shape();
-            shape.write_stl(path)?;
+    println!("<?xml version=\"1.0\" standalone=\"no\"?>");
+    println!("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"");
+    println!("\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">");
+    println!(
+        "<svg viewBox=\"{} {} {} {}\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">",
+        xmin, ymin, width, height
+    );
+
+    for contour in outline.contours_iter() {
+        let start = contour.start();
+        println!(
+            "<path fill=\"none\" stroke=\"black\" stroke-width=\"1\" d=\"M {} {}",
+            start.x, -start.y
+        );
+        for curve in contour {
+            draw_curve(curve);
         }
+        println!("Z \" />");
     }
-
-    Ok(())
-}
-
-fn make_glyph_shape(font: &mut Font, c: char) -> Shape {
-    let face = font.render_glyph(c);
-    let shape = face.extrude(DVec3::new(0.0, 1.0, 0.0));
-    shape
+    println!("</svg>");
 }
