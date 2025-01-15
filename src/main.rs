@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::Parser;
-use glam::{DVec2, DVec3};
+use glam::{DMat3, DVec2, DVec3};
 use opencascade::primitives::{BooleanShape, Edge, Face, IntoShape, Shape, Wire};
 use ttf_parser;
 
@@ -106,12 +106,17 @@ fn main() {
     let data = std::fs::read(args.font).unwrap();
     let face = ttf_parser::Face::parse(&data, 0).unwrap();
 
-    let shape = render_glyph_to_brep(&face, args.char, 100.0);
+    let shape = render_glyph_to_brep(&face, args.char, 100.0, DMat3::IDENTITY);
 
     shape.write_step("out.step").unwrap();
 }
 
-fn render_glyph_to_brep(face: &ttf_parser::Face, code_point: char, thickness: f64) -> Shape {
+fn render_glyph_to_brep(
+    face: &ttf_parser::Face,
+    code_point: char,
+    thickness: f64,
+    transform: DMat3,
+) -> Shape {
     let mut builder = GlyphBuilder::new();
     let glyph_id = face.glyph_index(code_point).unwrap();
     let bbox = face.outline_glyph(glyph_id, &mut builder).unwrap();
@@ -125,25 +130,25 @@ fn render_glyph_to_brep(face: &ttf_parser::Face, code_point: char, thickness: f6
         for curve in contour {
             match curve {
                 Curve::Line(p1, p2) => edges.push(Edge::segment(
-                    (p1 - h_center).extend(0.0),
-                    (p2 - h_center).extend(0.0),
+                    transform * (p1 - h_center).extend(-0.5 * thickness),
+                    transform * (p2 - h_center).extend(-0.5 * thickness),
                 )),
                 Curve::Bezier2(p1, p2, p3) => edges.push(Edge::bezier([
-                    (p1 - h_center).extend(0.0),
-                    (p2 - h_center).extend(0.0),
-                    (p3 - h_center).extend(0.0),
+                    transform * (p1 - h_center).extend(-0.5 * thickness),
+                    transform * (p2 - h_center).extend(-0.5 * thickness),
+                    transform * (p3 - h_center).extend(-0.5 * thickness),
                 ])),
                 Curve::Bezier3(p1, p2, p3, p4) => edges.push(Edge::bezier([
-                    (p1 - h_center).extend(0.0),
-                    (p2 - h_center).extend(0.0),
-                    (p3 - h_center).extend(0.0),
-                    (p4 - h_center).extend(0.0),
+                    transform * (p1 - h_center).extend(-0.5 * thickness),
+                    transform * (p2 - h_center).extend(-0.5 * thickness),
+                    transform * (p3 - h_center).extend(-0.5 * thickness),
+                    transform * (p4 - h_center).extend(-0.5 * thickness),
                 ])),
             }
         }
         let wire = Wire::from_edges(&edges);
         let face = Face::from_wire(&wire);
-        let solid = face.extrude(DVec3::new(0.0, 0.0, thickness));
+        let solid = face.extrude(transform * DVec3::new(0.0, 0.0, thickness));
         parts.push(solid.into_shape());
     }
 
