@@ -17,8 +17,6 @@ struct Args {
 
     #[arg(short, long, value_name = "FILE", default_value = "output")]
     output: PathBuf,
-
-    char: char,
 }
 
 struct GlyphBuilder {
@@ -100,27 +98,39 @@ impl ttf_parser::OutlineBuilder for GlyphBuilder {
     }
 }
 
-fn main() {
+const EXTRUSION_DEPTH: f64 = 10_000.0;
+
+fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     let data = std::fs::read(args.font).unwrap();
     let face = ttf_parser::Face::parse(&data, 0).unwrap();
 
-    let shape = render_cross_letter(&face, args.char, args.char);
+    std::fs::create_dir_all(&args.output)?;
 
-    shape.write_step("out.step").unwrap();
-}
+    let chars: String = ('A'..'Z').chain('0'..'9').collect();
 
-fn render_cross_letter(face: &ttf_parser::Face, c1: char, c2: char) -> Shape {
-    let shape_xy = render_glyph_to_brep(&face, c1, 10000.0, DMat3::IDENTITY);
-    let shape_zy = render_glyph_to_brep(
-        &face,
-        c2,
-        10000.0,
-        DMat3::from_rotation_y(std::f64::consts::FRAC_PI_2),
-    );
+    for char_1 in chars.chars() {
+        let shape_1 = render_glyph_to_brep(&face, char_1, EXTRUSION_DEPTH, DMat3::IDENTITY);
 
-    shape_xy.intersect(&shape_zy).into_shape()
+        for char_2 in chars.chars() {
+            let name = format!("{char_1}{char_2}");
+            println!("Preparing shape for {name}...");
+            let path = args.output.join(format!("{name}.step"));
+
+            let shape_2 = render_glyph_to_brep(
+                &face,
+                char_2,
+                10000.0,
+                DMat3::from_rotation_y(std::f64::consts::FRAC_PI_2),
+            );
+
+            let shape = shape_1.intersect(&shape_2).into_shape();
+            shape.write_step(path)?;
+        }
+    }
+
+    Ok(())
 }
 
 fn render_glyph_to_brep(
