@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use glam::{DVec2, DVec3};
-use opencascade::primitives::{Edge, Face, IntoShape, Shape, Wire};
+use opencascade::primitives::{BooleanShape, Edge, Face, IntoShape, Shape, Wire};
 use ttf_parser;
 
 #[derive(Parser, Debug)]
@@ -138,8 +138,12 @@ fn main() {
 
     let shape = parts
         .into_iter()
-        .reduce(|acc, x| acc.union(&x).into_shape())
+        .reduce(|acc, x| symmetric_difference(&acc, &x).into_shape())
         .unwrap();
 
     shape.write_step("out.step").unwrap();
+}
+
+fn symmetric_difference(a: &Shape, b: &Shape) -> BooleanShape {
+    a.union(b).subtract(&a.intersect(b))
 }
