@@ -237,6 +237,7 @@ checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 [[package]]
 name = "kicad-parser"
 version = "0.1.0"
+source = "git+https://github.com/mkovaxx/opencascade-rs?branch=bezier-edges#0aeb792f9819997367e40cdba659d3c7c19d9878"
 dependencies = [
  "sexp",
  "thiserror",
@@ -263,6 +264,7 @@ dependencies = [
 [[package]]
 name = "opencascade"
 version = "0.2.0"
+source = "git+https://github.com/mkovaxx/opencascade-rs?branch=bezier-edges#0aeb792f9819997367e40cdba659d3c7c19d9878"
 dependencies = [
  "cxx",
  "glam",
@@ -274,6 +276,7 @@ dependencies = [
 [[package]]
 name = "opencascade-sys"
 version = "0.2.0"
+source = "git+https://github.com/mkovaxx/opencascade-rs?branch=bezier-edges#0aeb792f9819997367e40cdba659d3c7c19d9878"
 dependencies = [
  "cmake",
  "cxx",
