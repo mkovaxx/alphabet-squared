@@ -110,22 +110,30 @@ fn main() -> anyhow::Result<()> {
 
     let chars: String = ('A'..'Z').chain('0'..'9').collect();
 
-    for char_1 in chars.chars() {
-        let shape_1 = render_glyph_to_brep(&face, char_1, EXTRUSION_DEPTH, DMat3::IDENTITY);
+    let transform_1 = DMat3::IDENTITY;
+    let shapes_1: Vec<Shape> = chars
+        .chars()
+        .map(|code_point| {
+            println!("Preparing shape 1 for {code_point}...");
+            render_glyph_to_brep(&face, code_point, EXTRUSION_DEPTH, transform_1)
+        })
+        .collect();
 
-        for char_2 in chars.chars() {
+    let transform_2 = DMat3::from_rotation_y(std::f64::consts::FRAC_PI_2);
+    let shapes_2: Vec<Shape> = chars
+        .chars()
+        .map(|code_point| {
+            println!("Preparing shape 2 for {code_point}...");
+            render_glyph_to_brep(&face, code_point, EXTRUSION_DEPTH, transform_2)
+        })
+        .collect();
+
+    for (char_1, shape_1) in chars.chars().zip(&shapes_1) {
+        for (char_2, shape_2) in chars.chars().zip(&shapes_2) {
             let name = format!("{char_1}{char_2}");
-            println!("Preparing shape for {name}...");
+            println!("Preparing cross shape for {name}...");
             let path = args.output.join(format!("{name}.step"));
-
-            let shape_2 = render_glyph_to_brep(
-                &face,
-                char_2,
-                10000.0,
-                DMat3::from_rotation_y(std::f64::consts::FRAC_PI_2),
-            );
-
-            let shape = shape_1.intersect(&shape_2).into_shape();
+            let shape = shape_1.intersect(shape_2).into_shape();
             shape.write_step(path)?;
         }
     }
