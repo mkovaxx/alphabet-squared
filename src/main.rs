@@ -106,14 +106,18 @@ fn main() {
     let data = std::fs::read(args.font).unwrap();
     let face = ttf_parser::Face::parse(&data, 0).unwrap();
 
+    let shape = render_glyph_to_brep(&face, args.char, 100.0);
+
+    shape.write_step("out.step").unwrap();
+}
+
+fn render_glyph_to_brep(face: &ttf_parser::Face, code_point: char, thickness: f64) -> Shape {
     let mut builder = GlyphBuilder::new();
-    let glyph_id = face.glyph_index(args.char).unwrap();
+    let glyph_id = face.glyph_index(code_point).unwrap();
     let bbox = face.outline_glyph(glyph_id, &mut builder).unwrap();
 
-    let center = DVec2::new(
-        (bbox.x_min + bbox.x_max) as f64 * 0.5,
-        (bbox.y_min + bbox.y_max) as f64 * 0.5,
-    );
+    // need to horizontally center glyphs
+    let h_center = DVec2::new((bbox.x_min + bbox.x_max) as f64 * 0.5, 0.0);
 
     let mut parts: Vec<Shape> = vec![];
     for contour in builder.contours {
@@ -121,25 +125,25 @@ fn main() {
         for curve in contour {
             match curve {
                 Curve::Line(p1, p2) => edges.push(Edge::segment(
-                    (p1 - center).extend(0.0),
-                    (p2 - center).extend(0.0),
+                    (p1 - h_center).extend(0.0),
+                    (p2 - h_center).extend(0.0),
                 )),
                 Curve::Bezier2(p1, p2, p3) => edges.push(Edge::bezier([
-                    (p1 - center).extend(0.0),
-                    (p2 - center).extend(0.0),
-                    (p3 - center).extend(0.0),
+                    (p1 - h_center).extend(0.0),
+                    (p2 - h_center).extend(0.0),
+                    (p3 - h_center).extend(0.0),
                 ])),
                 Curve::Bezier3(p1, p2, p3, p4) => edges.push(Edge::bezier([
-                    (p1 - center).extend(0.0),
-                    (p2 - center).extend(0.0),
-                    (p3 - center).extend(0.0),
-                    (p4 - center).extend(0.0),
+                    (p1 - h_center).extend(0.0),
+                    (p2 - h_center).extend(0.0),
+                    (p3 - h_center).extend(0.0),
+                    (p4 - h_center).extend(0.0),
                 ])),
             }
         }
         let wire = Wire::from_edges(&edges);
         let face = Face::from_wire(&wire);
-        let solid = face.extrude(DVec3::new(0.0, 0.0, 100.0));
+        let solid = face.extrude(DVec3::new(0.0, 0.0, thickness));
         parts.push(solid.into_shape());
     }
 
@@ -148,7 +152,7 @@ fn main() {
         .reduce(|acc, x| symmetric_difference(&acc, &x).into_shape())
         .unwrap();
 
-    shape.write_step("out.step").unwrap();
+    shape
 }
 
 fn symmetric_difference(a: &Shape, b: &Shape) -> BooleanShape {
