@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use clap::Parser;
-use freetype as ft;
-use glam::DVec3;
+use glam::DVec2;
 use opencascade::primitives::{Edge, Face, IntoShape, Wire};
+use ttf_parser;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -21,67 +21,124 @@ struct Args {
     char: char,
 }
 
+struct GlyphBuilder {
+    p0: Option<DVec2>,
+    pub contours: Vec<Contour>,
+}
+
+type Contour = Vec<Curve>;
+
+#[derive(Debug, Clone, Copy)]
+enum Curve {
+    Line(DVec2, DVec2),
+    Bezier2(DVec2, DVec2, DVec2),
+    Bezier3(DVec2, DVec2, DVec2, DVec2),
+}
+
+impl Curve {
+    pub fn first_point(&self) -> DVec2 {
+        match self {
+            Curve::Line(p, _) => *p,
+            Curve::Bezier2(p, _, _) => *p,
+            Curve::Bezier3(p, _, _, _) => *p,
+        }
+    }
+}
+
+impl GlyphBuilder {
+    pub fn new() -> Self {
+        Self {
+            p0: None,
+            contours: vec![],
+        }
+    }
+}
+
+impl ttf_parser::OutlineBuilder for GlyphBuilder {
+    fn move_to(&mut self, x: f32, y: f32) {
+        self.p0 = Some(DVec2::new(x as f64, y as f64));
+        self.contours.push(vec![]);
+    }
+
+    fn line_to(&mut self, x: f32, y: f32) {
+        let p0 = self.p0.unwrap();
+        let p1 = DVec2::new(x as f64, y as f64);
+        self.contours.last_mut().unwrap().push(Curve::Line(p0, p1));
+        self.p0 = Some(p1);
+    }
+
+    fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
+        let p0 = self.p0.unwrap();
+        let p1 = DVec2::new(x1 as f64, y1 as f64);
+        let p2 = DVec2::new(x as f64, y as f64);
+        self.contours
+            .last_mut()
+            .unwrap()
+            .push(Curve::Bezier2(p0, p1, p2));
+        self.p0 = Some(p2);
+    }
+
+    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
+        let p0 = self.p0.unwrap();
+        let p1 = DVec2::new(x1 as f64, y1 as f64);
+        let p2 = DVec2::new(x2 as f64, y2 as f64);
+        let p3 = DVec2::new(x as f64, y as f64);
+        self.contours
+            .last_mut()
+            .unwrap()
+            .push(Curve::Bezier3(p0, p1, p2, p3));
+        self.p0 = Some(p3);
+    }
+
+    fn close(&mut self) {
+        let p0 = self.p0.unwrap();
+        let p1 = self
+            .contours
+            .first()
+            .unwrap()
+            .first()
+            .unwrap()
+            .first_point();
+        if p0 != p1 {
+            self.contours.last_mut().unwrap().push(Curve::Line(p0, p1));
+        }
+        self.p0 = None;
+    }
+}
+
 fn main() {
     let args = Args::parse();
 
-    let font = args.font;
-    let character = args.char as usize;
-    let library = ft::Library::init().unwrap();
-    let face = library.new_face(font, 0).unwrap();
+    let data = std::fs::read(args.font).unwrap();
+    let face = ttf_parser::Face::parse(&data, 0).unwrap();
 
-    face.set_char_size(40 * 64, 0, 50, 0).unwrap();
-    face.load_char(character, ft::face::LoadFlag::NO_SCALE)
-        .unwrap();
+    let mut builder = GlyphBuilder::new();
+    let glyph_id = face.glyph_index(args.char).unwrap();
+    let bbox = face.outline_glyph(glyph_id, &mut builder).unwrap();
 
-    let glyph = face.glyph();
-    let metrics = glyph.metrics();
-    let xmin = metrics.horiBearingX - 5;
-    let width = metrics.width + 10;
-    let ymin = -metrics.horiBearingY - 5;
-    let height = metrics.height + 10;
-    let outline = glyph.outline().unwrap();
-
-    let mut faces = vec![];
-
-    for contour in outline.contours_iter() {
-        let mut p0 = *contour.start();
-        let mut edges = vec![];
+    let mut faces: Vec<Face> = vec![];
+    for contour in builder.contours {
+        println!("contour: {contour:?}");
+        let mut edges: Vec<Edge> = vec![];
         for curve in contour {
             match curve {
-                ft::outline::Curve::Line(p1) => {
-                    edges.push((p0, p1));
-                    p0 = p1;
-                }
-                ft::outline::Curve::Bezier2(p1, p2) => {
-                    // TODO: make quadratic Bezier edge
-                    edges.push((p0, p1));
-                    edges.push((p1, p2));
-                    p0 = p2;
-                }
-                ft::outline::Curve::Bezier3(p1, p2, p3) => {
-                    // TODO: make cubic Bezier edge
-                    edges.push((p0, p1));
-                    edges.push((p1, p2));
-                    edges.push((p2, p3));
-                    p0 = p3;
-                }
+                Curve::Line(p1, p2) => edges.push(Edge::segment(p1.extend(0.0), p2.extend(0.0))),
+                Curve::Bezier2(p1, p2, p3) => edges.push(Edge::bezier([
+                    p1.extend(0.0),
+                    p2.extend(0.0),
+                    p3.extend(0.0),
+                ])),
+                Curve::Bezier3(p1, p2, p3, p4) => edges.push(Edge::bezier([
+                    p1.extend(0.0),
+                    p2.extend(0.0),
+                    p3.extend(0.0),
+                    p4.extend(0.0),
+                ])),
             }
+            let wire = Wire::from_edges(&edges);
+            let face = Face::from_wire(&wire);
+            faces.push(face);
         }
-
-        let edges: Vec<Edge> = edges
-            .iter()
-            .filter(|(p1, p2)| p1 != p2)
-            .map(|(p1, p2)| {
-                Edge::segment(
-                    DVec3::new(p1.x as f64, p1.y as f64, 0.0),
-                    DVec3::new(p2.x as f64, p2.y as f64, 0.0),
-                )
-            })
-            .collect();
-        let wire = Wire::from_edges(&edges);
-        let face = Face::from_wire(&wire);
-
-        faces.push(face);
     }
 
     let shape = faces
