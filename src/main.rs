@@ -19,85 +19,6 @@ struct Args {
     output: PathBuf,
 }
 
-struct GlyphBuilder {
-    p0: Option<DVec2>,
-    pub contours: Vec<Contour>,
-}
-
-type Contour = Vec<Curve>;
-
-#[derive(Debug, Clone, Copy)]
-enum Curve {
-    Line(DVec2, DVec2),
-    Bezier2(DVec2, DVec2, DVec2),
-    Bezier3(DVec2, DVec2, DVec2, DVec2),
-}
-
-impl Curve {
-    pub fn first_point(&self) -> DVec2 {
-        match self {
-            Curve::Line(p, _) => *p,
-            Curve::Bezier2(p, _, _) => *p,
-            Curve::Bezier3(p, _, _, _) => *p,
-        }
-    }
-}
-
-impl GlyphBuilder {
-    pub fn new() -> Self {
-        Self {
-            p0: None,
-            contours: vec![],
-        }
-    }
-}
-
-impl ttf_parser::OutlineBuilder for GlyphBuilder {
-    fn move_to(&mut self, x: f32, y: f32) {
-        self.p0 = Some(DVec2::new(x as f64, y as f64));
-        self.contours.push(vec![]);
-    }
-
-    fn line_to(&mut self, x: f32, y: f32) {
-        let p0 = self.p0.unwrap();
-        let p1 = DVec2::new(x as f64, y as f64);
-        self.contours.last_mut().unwrap().push(Curve::Line(p0, p1));
-        self.p0 = Some(p1);
-    }
-
-    fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
-        let p0 = self.p0.unwrap();
-        let p1 = DVec2::new(x1 as f64, y1 as f64);
-        let p2 = DVec2::new(x as f64, y as f64);
-        self.contours
-            .last_mut()
-            .unwrap()
-            .push(Curve::Bezier2(p0, p1, p2));
-        self.p0 = Some(p2);
-    }
-
-    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
-        let p0 = self.p0.unwrap();
-        let p1 = DVec2::new(x1 as f64, y1 as f64);
-        let p2 = DVec2::new(x2 as f64, y2 as f64);
-        let p3 = DVec2::new(x as f64, y as f64);
-        self.contours
-            .last_mut()
-            .unwrap()
-            .push(Curve::Bezier3(p0, p1, p2, p3));
-        self.p0 = Some(p3);
-    }
-
-    fn close(&mut self) {
-        let p0 = self.p0.unwrap();
-        let p1 = self.contours.last().unwrap().first().unwrap().first_point();
-        if p0 != p1 {
-            self.contours.last_mut().unwrap().push(Curve::Line(p0, p1));
-        }
-        self.p0 = None;
-    }
-}
-
 const EXTRUSION_DEPTH: f64 = 10_000.0;
 
 fn main() -> anyhow::Result<()> {
@@ -192,4 +113,83 @@ fn render_glyph_to_brep(
 
 fn symmetric_difference(a: &Shape, b: &Shape) -> BooleanShape {
     a.union(b).subtract(&a.intersect(b))
+}
+
+struct GlyphBuilder {
+    p0: Option<DVec2>,
+    pub contours: Vec<Contour>,
+}
+
+type Contour = Vec<Curve>;
+
+#[derive(Debug, Clone, Copy)]
+enum Curve {
+    Line(DVec2, DVec2),
+    Bezier2(DVec2, DVec2, DVec2),
+    Bezier3(DVec2, DVec2, DVec2, DVec2),
+}
+
+impl Curve {
+    pub fn first_point(&self) -> DVec2 {
+        match self {
+            Curve::Line(p, _) => *p,
+            Curve::Bezier2(p, _, _) => *p,
+            Curve::Bezier3(p, _, _, _) => *p,
+        }
+    }
+}
+
+impl GlyphBuilder {
+    pub fn new() -> Self {
+        Self {
+            p0: None,
+            contours: vec![],
+        }
+    }
+}
+
+impl ttf_parser::OutlineBuilder for GlyphBuilder {
+    fn move_to(&mut self, x: f32, y: f32) {
+        self.p0 = Some(DVec2::new(x as f64, y as f64));
+        self.contours.push(vec![]);
+    }
+
+    fn line_to(&mut self, x: f32, y: f32) {
+        let p0 = self.p0.unwrap();
+        let p1 = DVec2::new(x as f64, y as f64);
+        self.contours.last_mut().unwrap().push(Curve::Line(p0, p1));
+        self.p0 = Some(p1);
+    }
+
+    fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
+        let p0 = self.p0.unwrap();
+        let p1 = DVec2::new(x1 as f64, y1 as f64);
+        let p2 = DVec2::new(x as f64, y as f64);
+        self.contours
+            .last_mut()
+            .unwrap()
+            .push(Curve::Bezier2(p0, p1, p2));
+        self.p0 = Some(p2);
+    }
+
+    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
+        let p0 = self.p0.unwrap();
+        let p1 = DVec2::new(x1 as f64, y1 as f64);
+        let p2 = DVec2::new(x2 as f64, y2 as f64);
+        let p3 = DVec2::new(x as f64, y as f64);
+        self.contours
+            .last_mut()
+            .unwrap()
+            .push(Curve::Bezier3(p0, p1, p2, p3));
+        self.p0 = Some(p3);
+    }
+
+    fn close(&mut self) {
+        let p0 = self.p0.unwrap();
+        let p1 = self.contours.last().unwrap().first().unwrap().first_point();
+        if p0 != p1 {
+            self.contours.last_mut().unwrap().push(Curve::Line(p0, p1));
+        }
+        self.p0 = None;
+    }
 }
