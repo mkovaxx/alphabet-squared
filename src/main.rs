@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use clap::Parser;
-use glam::DVec2;
-use opencascade::primitives::{Edge, Face, IntoShape, Wire};
+use glam::{DVec2, DVec3};
+use opencascade::primitives::{Edge, Face, IntoShape, Shape, Wire};
 use ttf_parser;
 
 #[derive(Parser, Debug)]
@@ -92,13 +92,7 @@ impl ttf_parser::OutlineBuilder for GlyphBuilder {
 
     fn close(&mut self) {
         let p0 = self.p0.unwrap();
-        let p1 = self
-            .contours
-            .first()
-            .unwrap()
-            .first()
-            .unwrap()
-            .first_point();
+        let p1 = self.contours.last().unwrap().first().unwrap().first_point();
         if p0 != p1 {
             self.contours.last_mut().unwrap().push(Curve::Line(p0, p1));
         }
@@ -116,7 +110,7 @@ fn main() {
     let glyph_id = face.glyph_index(args.char).unwrap();
     let bbox = face.outline_glyph(glyph_id, &mut builder).unwrap();
 
-    let mut faces: Vec<Face> = vec![];
+    let mut parts: Vec<Shape> = vec![];
     for contour in builder.contours {
         println!("contour: {contour:?}");
         let mut edges: Vec<Edge> = vec![];
@@ -135,15 +129,15 @@ fn main() {
                     p4.extend(0.0),
                 ])),
             }
-            let wire = Wire::from_edges(&edges);
-            let face = Face::from_wire(&wire);
-            faces.push(face);
         }
+        let wire = Wire::from_edges(&edges);
+        let face = Face::from_wire(&wire);
+        let solid = face.extrude(DVec3::new(0.0, 0.0, 100.0));
+        parts.push(solid.into_shape());
     }
 
-    let shape = faces
-        .iter()
-        .map(|x| x.into_shape())
+    let shape = parts
+        .into_iter()
         .reduce(|acc, x| acc.union(&x).into_shape())
         .unwrap();
 
