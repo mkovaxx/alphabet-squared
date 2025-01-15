@@ -110,22 +110,30 @@ fn main() {
     let glyph_id = face.glyph_index(args.char).unwrap();
     let bbox = face.outline_glyph(glyph_id, &mut builder).unwrap();
 
+    let center = DVec2::new(
+        (bbox.x_min + bbox.x_max) as f64 * 0.5,
+        (bbox.y_min + bbox.y_max) as f64 * 0.5,
+    );
+
     let mut parts: Vec<Shape> = vec![];
     for contour in builder.contours {
         let mut edges: Vec<Edge> = vec![];
         for curve in contour {
             match curve {
-                Curve::Line(p1, p2) => edges.push(Edge::segment(p1.extend(0.0), p2.extend(0.0))),
+                Curve::Line(p1, p2) => edges.push(Edge::segment(
+                    (p1 - center).extend(0.0),
+                    (p2 - center).extend(0.0),
+                )),
                 Curve::Bezier2(p1, p2, p3) => edges.push(Edge::bezier([
-                    p1.extend(0.0),
-                    p2.extend(0.0),
-                    p3.extend(0.0),
+                    (p1 - center).extend(0.0),
+                    (p2 - center).extend(0.0),
+                    (p3 - center).extend(0.0),
                 ])),
                 Curve::Bezier3(p1, p2, p3, p4) => edges.push(Edge::bezier([
-                    p1.extend(0.0),
-                    p2.extend(0.0),
-                    p3.extend(0.0),
-                    p4.extend(0.0),
+                    (p1 - center).extend(0.0),
+                    (p2 - center).extend(0.0),
+                    (p3 - center).extend(0.0),
+                    (p4 - center).extend(0.0),
                 ])),
             }
         }
