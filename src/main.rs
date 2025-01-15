@@ -106,17 +106,21 @@ fn main() {
     let data = std::fs::read(args.font).unwrap();
     let face = ttf_parser::Face::parse(&data, 0).unwrap();
 
-    let shape_xy = render_glyph_to_brep(&face, args.char, 10000.0, DMat3::IDENTITY);
+    let shape = render_cross_letter(&face, args.char, args.char);
+
+    shape.write_step("out.step").unwrap();
+}
+
+fn render_cross_letter(face: &ttf_parser::Face, c1: char, c2: char) -> Shape {
+    let shape_xy = render_glyph_to_brep(&face, c1, 10000.0, DMat3::IDENTITY);
     let shape_zy = render_glyph_to_brep(
         &face,
-        args.char,
+        c2,
         10000.0,
         DMat3::from_rotation_y(std::f64::consts::FRAC_PI_2),
     );
 
-    let shape = shape_xy.intersect(&shape_zy).into_shape();
-
-    shape.write_step("out.step").unwrap();
+    shape_xy.intersect(&shape_zy).into_shape()
 }
 
 fn render_glyph_to_brep(
