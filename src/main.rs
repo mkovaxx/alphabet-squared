@@ -106,7 +106,15 @@ fn main() {
     let data = std::fs::read(args.font).unwrap();
     let face = ttf_parser::Face::parse(&data, 0).unwrap();
 
-    let shape = render_glyph_to_brep(&face, args.char, 100.0, DMat3::IDENTITY);
+    let shape_xy = render_glyph_to_brep(&face, args.char, 10000.0, DMat3::IDENTITY);
+    let shape_zy = render_glyph_to_brep(
+        &face,
+        args.char,
+        10000.0,
+        DMat3::from_rotation_y(std::f64::consts::FRAC_PI_2),
+    );
+
+    let shape = shape_xy.intersect(&shape_zy).into_shape();
 
     shape.write_step("out.step").unwrap();
 }
