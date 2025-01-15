@@ -112,7 +112,6 @@ fn main() {
 
     let mut parts: Vec<Shape> = vec![];
     for contour in builder.contours {
-        println!("contour: {contour:?}");
         let mut edges: Vec<Edge> = vec![];
         for curve in contour {
             match curve {
