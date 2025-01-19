@@ -237,7 +237,7 @@ checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 [[package]]
 name = "kicad-parser"
 version = "0.1.0"
-source = "git+https://github.com/mkovaxx/opencascade-rs?branch=bezier-edges#0aeb792f9819997367e40cdba659d3c7c19d9878"
+source = "git+https://github.com/bschwind/opencascade-rs?rev=6fe6eed791752c6daa5c571a7038e7e8964a2458#6fe6eed791752c6daa5c571a7038e7e8964a2458"
 dependencies = [
  "sexp",
  "thiserror",
@@ -254,9 +254,9 @@ dependencies = [
 
 [[package]]
 name = "occt-sys"
-version = "0.5.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f21b287cafb512e8eee92b8961bf7c39d196fd03de5e17da51843cc106ae62bc"
+checksum = "a1b3fb218c80b037a612cc4ec325a426a1705d0b2e25b207f7e3db22556ded5f"
 dependencies = [
  "cmake",
 ]
@@ -264,7 +264,7 @@ dependencies = [
 [[package]]
 name = "opencascade"
 version = "0.2.0"
-source = "git+https://github.com/mkovaxx/opencascade-rs?branch=bezier-edges#0aeb792f9819997367e40cdba659d3c7c19d9878"
+source = "git+https://github.com/bschwind/opencascade-rs?rev=6fe6eed791752c6daa5c571a7038e7e8964a2458#6fe6eed791752c6daa5c571a7038e7e8964a2458"
 dependencies = [
  "cxx",
  "glam",
@@ -276,7 +276,7 @@ dependencies = [
 [[package]]
 name = "opencascade-sys"
 version = "0.2.0"
-source = "git+https://github.com/mkovaxx/opencascade-rs?branch=bezier-edges#0aeb792f9819997367e40cdba659d3c7c19d9878"
+source = "git+https://github.com/bschwind/opencascade-rs?rev=6fe6eed791752c6daa5c571a7038e7e8964a2458#6fe6eed791752c6daa5c571a7038e7e8964a2458"
 dependencies = [
  "cmake",
  "cxx",
