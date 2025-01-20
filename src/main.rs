@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use glam::{DMat3, DVec2, DVec3};
-use opencascade::primitives::{BooleanShape, Edge, Face, IntoShape, Shape, Wire};
+use opencascade::primitives::{CompoundFace, Edge, Face, IntoShape, Shape, Wire};
 use ttf_parser;
 
 #[derive(Parser, Debug)]
@@ -75,7 +75,7 @@ fn render_glyph_to_brep(
     // need to horizontally center glyphs
     let h_center = DVec2::new((bbox.x_min + bbox.x_max) as f64 * 0.5, 0.0);
 
-    let mut parts: Vec<Shape> = vec![];
+    let mut parts: Vec<CompoundFace> = vec![];
     for contour in builder.contours {
         let mut edges: Vec<Edge> = vec![];
         for curve in contour {
@@ -99,19 +99,18 @@ fn render_glyph_to_brep(
         }
         let wire = Wire::from_edges(&edges);
         let face = Face::from_wire(&wire);
-        let solid = face.extrude(transform * DVec3::new(0.0, 0.0, thickness));
-        parts.push(solid.into_shape());
+        parts.push(face.into());
     }
 
-    let shape = parts
+    let compound_face = parts
         .into_iter()
-        .reduce(|acc, x| symmetric_difference(&acc, &x).into_shape())
+        .reduce(|acc, x| symmetric_difference(&acc, &x))
         .unwrap();
 
-    shape
+    compound_face.extrude(transform * DVec3::new(0.0, 0.0, thickness))
 }
 
-fn symmetric_difference(a: &Shape, b: &Shape) -> BooleanShape {
+fn symmetric_difference(a: &CompoundFace, b: &CompoundFace) -> CompoundFace {
     a.union(b).subtract(&a.intersect(b))
 }
 

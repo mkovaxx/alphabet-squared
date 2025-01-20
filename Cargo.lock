@@ -237,7 +237,7 @@ checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 [[package]]
 name = "kicad-parser"
 version = "0.1.0"
-source = "git+https://github.com/bschwind/opencascade-rs?rev=6fe6eed791752c6daa5c571a7038e7e8964a2458#6fe6eed791752c6daa5c571a7038e7e8964a2458"
+source = "git+https://github.com/mkovaxx/opencascade-rs?branch=face-to-compound-face#a12210efc56ecb8127a62ddeff52a8bb8186e46d"
 dependencies = [
  "sexp",
  "thiserror",
@@ -264,7 +264,7 @@ dependencies = [
 [[package]]
 name = "opencascade"
 version = "0.2.0"
-source = "git+https://github.com/bschwind/opencascade-rs?rev=6fe6eed791752c6daa5c571a7038e7e8964a2458#6fe6eed791752c6daa5c571a7038e7e8964a2458"
+source = "git+https://github.com/mkovaxx/opencascade-rs?branch=face-to-compound-face#a12210efc56ecb8127a62ddeff52a8bb8186e46d"
 dependencies = [
  "cxx",
  "glam",
@@ -276,7 +276,7 @@ dependencies = [
 [[package]]
 name = "opencascade-sys"
 version = "0.2.0"
-source = "git+https://github.com/bschwind/opencascade-rs?rev=6fe6eed791752c6daa5c571a7038e7e8964a2458#6fe6eed791752c6daa5c571a7038e7e8964a2458"
+source = "git+https://github.com/mkovaxx/opencascade-rs?branch=face-to-compound-face#a12210efc56ecb8127a62ddeff52a8bb8186e46d"
 dependencies = [
  "cmake",
  "cxx",
