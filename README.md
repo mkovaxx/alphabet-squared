@@ -6,4 +6,4 @@ Generate 3D letter intersections. Inspired by https://github.com/ijanos/aallpphh
 
 ### MacBook Pro 2023 Apple M2 Max 32 GB
 
-cargo run --release 3273.86s user 60.84s system 92% cpu 59:51.91 total
+cargo run --release 445.52s user 46.31s system 99% cpu 8:12.32 total
